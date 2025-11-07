@@ -11,9 +11,6 @@ on:
       - main
       - develop
 
-env:
-  IMAGE_NAME: ${{ secrets.IMAGE_NAME || format('{0}/{1}', github.actor, github.repository) }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -79,5 +76,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:${{ github.run_number }}-${{ github.sha }}
+            ubaidullah334/githubaction:latest
+            ubaidullah334/githubaction:${{ github.run_number }}-${{ github.sha }}
