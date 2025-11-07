@@ -23,57 +23,60 @@ jobs:
       id-token: write
 
     steps:
+      # 🧾 Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # fetch full history so git tags/versions are available
 
+      # ⚙️ Step 2: Setup .NET
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
+      # 📦 Step 3: Restore dependencies
       - name: Restore dependencies
-        working-directory: ./MyApp
         run: dotnet restore
 
+      # 🏗️ Step 4: Build project
       - name: Build
-        working-directory: ./MyApp
         run: dotnet build --no-restore -c Release
 
+      # ✅ Step 5: Run tests (if available)
       - name: Test
-        working-directory: ./MyApp
         run: |
-          if [ -f "./MyApp.Tests/MyApp.Tests.csproj" ]; then
-            dotnet test ./MyApp.Tests -c Release --no-build
+          if [ -d "./Tests" ]; then
+            dotnet test ./Tests -c Release --no-build
           else
             echo "No tests found - skipping"
           fi
 
+      # 🚀 Step 6: Publish project
       - name: Publish
-        working-directory: ./MyApp
         run: dotnet publish -c Release -o published
 
+      # 🏷️ Step 7: Set image tags
       - name: Set image tags
         id: vars
         run: |
           echo "COMMIT_SHA=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
           echo "RUN_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
-          # Tag: use semantic version if present, else run number and short sha
           echo "IMAGE_TAG=${GITHUB_REF_NAME:-${GITHUB_RUN_NUMBER}}-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-      # NOTE: GITHUB_REF_NAME not always set for push to main; alternate logic could extract tag
 
+      # 🔐 Step 8: Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # 🐳 Step 9: Build and push Docker image
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./MyApp
-          file: ./MyApp/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:latest
